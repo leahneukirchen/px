@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	for (; *result; result++) {
 		proc_t *p = *result;
 
-		if (argc > 0) {
+		if (argc > 1) {
 			for (int i = 1; i < argc; i++)
 				if (strstr(p->cmd, argv[i]))
 					goto match;
