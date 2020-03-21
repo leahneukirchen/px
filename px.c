@@ -27,6 +27,23 @@ print_human(intmax_t i)
                 printf("%4.0f%s", d, u);
 }
 
+static void
+print_time(time_t t) {
+	unsigned int dd, hh, mm, ss;
+
+	ss = t % 60; t /= 60;
+	mm = t % 60; t /= 60;
+	hh = t % 24; t /= 24;
+	dd = t;
+
+	if (dd)
+		printf(" %3ud%02uh", dd, hh);
+	else if (hh)
+		printf("  %2uh%02um", hh, mm);
+	else
+		printf("   %2u:%02u", mm, ss);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -62,17 +79,19 @@ match:
 		}
 
 		if (matched == 1)
-			printf("  PID USER     %%CPU  VSZ  RSS START ELAPSED   TIME COMMAND\n");
+			printf("  PID USER     %%CPU  VSZ  RSS START ELAPSED CPUTIME COMMAND\n");
 
 		printf("%5d", p->tid);
 		printf(" %-8.8s", p->euser);
 
 		double pcpu = 0;
 		time_t seconds;
+		time_t cputime;
 
+		cputime = (p->utime + p->stime) / clktck;
 		seconds = si.uptime - p->start_time / clktck;
 		if (seconds)
-			pcpu = ((p->utime + p->stime) * 100.0 / clktck) / seconds;
+			pcpu = (cputime * 100.0) / seconds;
 
 		printf(" %4.1f", pcpu);
 		print_human(p->vm_size*1024);
@@ -83,7 +102,7 @@ match:
 		start = (now - si.uptime) + p->start_time / clktck;
 		seconds_ago = now - start;
 		if (seconds_ago < 0)
-			seconds_ago=0;
+			seconds_ago = 0;
 
 		char buf[7];
 		if (seconds_ago > 3600*24)
@@ -92,35 +111,9 @@ match:
 			strftime(buf, sizeof buf, "%H:%M", localtime(&start));
 		printf(" %s", buf);
 
-		time_t t = seconds_ago;
-		unsigned dd,hh,mm,ss;
-		ss = t%60;
-		t /= 60;
-		mm = t%60;
-		t /= 60;
-		hh = t%24;
-		t /= 24;
-		dd = t;
+		print_time(seconds_ago);
 
-		if (dd)
-			printf(" %3ud%02uh", dd, hh);
-		else if (hh)
-			printf("  %2uh%02um", hh, mm);
-		else
-			printf("   %2u:%02u", mm, ss);
-
-
-		t = (p->utime + p->stime) / clktck;
-		ss = t%60;
-		t /= 60;
-		mm = t%60;
-		t /= 60;
-		hh = t%24;
-
-		if (hh)
-			printf(" %3uh%02u", hh, mm);
-		else
-			printf("  %2u:%02u", mm, ss);
+		print_time(cputime);
 
 		if (p->cmdline) {
 			for (int i = 0; p->cmdline[i]; i++) {
