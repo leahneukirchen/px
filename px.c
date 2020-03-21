@@ -1,5 +1,4 @@
-// gcc -g -O2 -Wall -o px px.c -lprocps
-
+#include <sys/auxv.h>
 #include <sys/sysinfo.h>
 
 #include <stdint.h>
@@ -9,27 +8,6 @@
 #include <time.h>
 
 #include <proc/readproc.h>
-
-time_t seconds_since_boot;
-int Hertz;
-
-static int want_this_proc_pcpu(proc_t *buf){
-  unsigned long long used_jiffies;
-  unsigned long pcpu = 0;
-  unsigned long long seconds;
-
-//  if(!want_this_proc(buf)) return 0;
-
-  used_jiffies = buf->utime + buf->stime;
-//  if(include_dead_children) used_jiffies += (buf->cutime + buf->cstime);
-
-  seconds = seconds_since_boot - buf->start_time / Hertz;
-  if(seconds) pcpu = (used_jiffies * 1000ULL / Hertz) / seconds;
-
-  buf->pcpu = pcpu;  // fits in an int, summing children on 128 CPUs
-
-  return 1;
-}
 
 static void
 print_human(intmax_t i)
@@ -53,18 +31,15 @@ int
 main(int argc, char *argv[])
 {
 	proc_t **result;
-	int hz;
+	int clktck;
 
-	if((hz = sysconf(_SC_CLK_TCK)) > 0){
-		Hertz = hz;
-	} else {
-		Hertz = 100; 	/* shrug */
-	}
+	if ((clktck = getauxval(AT_CLKTCK)) <= 0)
+		if ((clktck = sysconf(_SC_CLK_TCK)) <= 0)
+			clktck = 100; 	/* educated guess */
 
 	struct sysinfo si;
 	sysinfo(&si);
 
-	seconds_since_boot = si.uptime;
 	time_t now = time(0);
 
 	result = readproctab(PROC_FILLMEM | PROC_FILLCOM | PROC_FILLUSR |
@@ -89,19 +64,26 @@ match:
 		if (matched == 1)
 			printf("  PID USER     %%CPU  VSZ  RSS START ELAPSED   TIME COMMAND\n");
 
-		want_this_proc_pcpu(p);
-
 		printf("%5d", p->tid);
 		printf(" %-8.8s", p->euser);
-		printf(" %4.1f", p->pcpu/10.0);
+
+		double pcpu = 0;
+		time_t seconds;
+
+		seconds = si.uptime - p->start_time / clktck;
+		if (seconds)
+			pcpu = ((p->utime + p->stime) * 100.0 / clktck) / seconds;
+
+		printf(" %4.1f", pcpu);
 		print_human(p->vm_size*1024);
 		print_human(p->vm_rss*1024);
 
 		time_t start;
 		time_t seconds_ago;
-		start = (now - si.uptime) + p->start_time / Hertz;
+		start = (now - si.uptime) + p->start_time / clktck;
 		seconds_ago = now - start;
-		if(seconds_ago < 0) seconds_ago=0;
+		if (seconds_ago < 0)
+			seconds_ago=0;
 
 		char buf[7];
 		if (seconds_ago > 3600*24)
@@ -128,7 +110,7 @@ match:
 			printf("   %2u:%02u", mm, ss);
 
 
-		t = (p->utime + p->stime) / Hertz;
+		t = (p->utime + p->stime) / clktck;
 		ss = t%60;
 		t /= 60;
 		mm = t%60;
@@ -152,17 +134,7 @@ match:
 		if (p->state == 'Z')
 			printf(" <defunct>");
 		printf("\n");
-
-#if 0
-		printf("%d %s %f %ld %ld %ld %lld %lld %lld %s\n",
-		    p->tid, p->euser, p->pcpu/10.0, pmem,
-		    p->vm_size, p->vm_rss, p->start_time, 0ULL, p->utime,
-		    p->cmd
-		);
-#endif
 	}
 
-//	freeproctab(result);
-
-	exit(matched > 0);
+	exit(!matched);
 }
