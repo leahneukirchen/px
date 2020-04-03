@@ -9,6 +9,7 @@
 #include <sys/auxv.h>
 #include <sys/sysinfo.h>
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,9 +76,19 @@ main(int argc, char *argv[])
 		proc_t *p = *result;
 
 		if (argc > 1) {
-			for (int i = 1; i < argc; i++)
+			for (int i = 1; i < argc; i++) {
+				for (size_t j = 0; j < strlen(argv[i]); j++) {
+					if (!isdigit(argv[i][j]))
+						goto word;
+				}
+				if (p->tid == atoi(argv[i]))
+					goto match;
+				else
+					continue;
+word:
 				if (strstr(p->cmd, argv[i]))
 					goto match;
+			}
 			continue;
 match:
 			matched++;
