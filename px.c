@@ -18,6 +18,8 @@
 
 #include <proc/readproc.h>
 
+int fflag;
+
 static void
 print_human(intmax_t i)
 {
@@ -64,6 +66,8 @@ main(int argc, char *argv[])
 	struct sysinfo si;
 	sysinfo(&si);
 
+	pid_t me = getpid();
+
 	time_t now = time(0);
 
 	proc_t **result;
@@ -72,29 +76,45 @@ main(int argc, char *argv[])
 
 	int matched = 0;
 
+	int c;
+        while ((c = getopt(argc, argv, "f")) != -1)
+                switch (c) {
+		case 'f': fflag = 1; break;
+                default:
+                        fprintf(stderr,
+			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
+                        exit(1);
+                }
+
 	for (; *result; result++) {
 		proc_t *p = *result;
 
-		if (argc > 1) {
-			for (int i = 1; i < argc; i++) {
-				for (size_t j = 0; j < strlen(argv[i]); j++) {
-					if (!isdigit(argv[i][j]))
-						goto word;
-				}
-				if (p->tid == atoi(argv[i]))
-					goto match;
-				else
-					continue;
+		if (argc <= optind)
+			goto match;
+
+		for (int i = optind; i < argc; i++) {
+			for (size_t j = 0; j < strlen(argv[i]); j++)
+				if (!isdigit(argv[i][j]))
+					goto word;
+			if (p->tid == atoi(argv[i]))
+				goto match;
+			else
+				continue;
 word:
-				if (strstr(p->cmd, argv[i]))
-					goto match;
+			if (fflag && p->cmdline) {
+				if (p->tid == me)
+					continue; /* we'd always match ourself */
+				for (int j = 0; p->cmdline[j]; j++)
+					if (strstr(p->cmdline[j], argv[i]))
+						goto match;
 			}
-			continue;
-match:
-			matched++;
-		} else {
-			matched++;
+			else if (strstr(p->cmd, argv[i]))
+				goto match;
 		}
+		continue;
+
+match:
+		matched++;
 
 		if (matched == 1)
 			printf("  PID USER     %%CPU  VSZ  RSS START ELAPSED CPUTIME COMMAND\n");
