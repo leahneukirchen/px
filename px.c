@@ -15,8 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
-#include <proc/readproc.h>
+#include <libproc2/pids.h>
+#include <libproc2/stat.h>
 
 int fflag;
 
@@ -58,21 +60,56 @@ print_time(time_t t) {
 int
 main(int argc, char *argv[])
 {
-	int clktck;
-	if ((clktck = getauxval(AT_CLKTCK)) <= 0)
-		if ((clktck = sysconf(_SC_CLK_TCK)) <= 0)
-			clktck = 100; 	/* educated guess */
-
-	struct sysinfo si;
-	sysinfo(&si);
-
 	pid_t me = getpid();
 
 	time_t now = time(0);
 
-	proc_t **result;
-	result = readproctab(PROC_FILLCOM | PROC_FILLUSR |
-	    PROC_FILLSTAT | PROC_FILLSTATUS);
+	struct stat_info *stat_info = 0;
+	if (procps_stat_new(&stat_info) < 0)
+		abort();
+	time_t boot_time = STAT_GET(stat_info, STAT_SYS_TIME_OF_BOOT, ul_int);
+	procps_stat_unref(&stat_info);
+
+	struct pids_info *Pids_info = 0;
+	enum pids_item items[] = {
+		PIDS_CMD,
+		PIDS_CMDLINE_V,
+		PIDS_ID_EUSER,
+		PIDS_ID_TID,
+		PIDS_STATE,
+		PIDS_TIME_ALL,
+		PIDS_TIME_ELAPSED,
+		PIDS_TIME_START,
+		PIDS_TTY_NAME,
+		PIDS_UTILIZATION,
+		PIDS_VM_RSS,
+		PIDS_VM_SIZE,
+	};
+	enum rel_items {
+		EU_CMD,
+		EU_CMDLINE_V,
+		EU_ID_EUSER,
+		EU_ID_TID,
+		EU_STATE,
+		EU_TIME_ALL,
+		EU_TIME_ELAPSED,
+		EU_TIME_START,
+		EU_TTY_NAME,
+		EU_UTILIZATION,
+		EU_VM_RSS,
+		EU_VM_SIZE,
+	};
+	if (procps_pids_new(&Pids_info, items, 12) < 0) {
+		abort();
+	}
+
+	struct pids_fetch *reap;
+	if (!(reap = procps_pids_reap(Pids_info, PIDS_FETCH_TASKS_ONLY))) {
+		abort();
+	}
+
+//	result = readproctab(PROC_FILLCOM | PROC_FILLUSR |
+//	    PROC_FILLSTAT | PROC_FILLSTATUS);
 
 	int matched = 0;
 
@@ -86,29 +123,35 @@ main(int argc, char *argv[])
                         exit(1);
                 }
 
-	for (; *result; result++) {
-		proc_t *p = *result;
-
+	int total_procs = reap->counts->total;
+	for (int i = 0; i < total_procs; i++) {
+#define PIDS_GETCHR(e) PIDS_VAL(EU_ ## e, s_ch, reap->stacks[i], Pids_info)
+#define PIDS_GETINT(e) PIDS_VAL(EU_ ## e, s_int, reap->stacks[i], Pids_info)
+#define PIDS_GETUNT(e) PIDS_VAL(EU_ ## e, u_int, reap->stacks[i], Pids_info)
+#define PIDS_GETULINT(e) PIDS_VAL(EU_ ## e, ul_int, reap->stacks[i], Pids_info)
+#define PIDS_GETREAL(e) PIDS_VAL(EU_ ## e, real, reap->stacks[i], Pids_info)
+#define PIDS_GETSTR(e) PIDS_VAL(EU_ ## e, str, reap->stacks[i], Pids_info)
+#define PIDS_GETSTR_V(e) PIDS_VAL(EU_ ## e, strv, reap->stacks[i], Pids_info)
 		if (argc <= optind)
 			goto match;
 
-		for (int i = optind; i < argc; i++) {
-			for (size_t j = 0; j < strlen(argv[i]); j++)
-				if (!isdigit(argv[i][j]))
+		for (int j = optind; j < argc; j++) {
+			for (size_t k = 0; k < strlen(argv[j]); k++)
+				if (!isdigit(argv[j][k]))
 					goto word;
-			if (p->tid == atoi(argv[i]))
+			if (PIDS_GETINT(ID_TID) == atoi(argv[j]))
 				goto match;
 			else
 				continue;
 word:
-			if (fflag && p->cmdline) {
-				if (p->tid == me)
+			if (fflag && PIDS_GETSTR_V(CMDLINE_V)) {
+				if (PIDS_GETINT(ID_TID) == me)
 					continue; /* we'd always match ourself */
-				for (int j = 0; p->cmdline[j]; j++)
-					if (strstr(p->cmdline[j], argv[i]))
+				for (int k = 0; PIDS_GETSTR_V(CMDLINE_V)[k]; k++)
+					if (strstr(PIDS_GETSTR_V(CMDLINE_V)[k], argv[j]))
 						goto match;
 			}
-			else if (strstr(p->cmd, argv[i]))
+			else if (strstr(PIDS_GETSTR(CMD), argv[j]))
 				goto match;
 		}
 		continue;
@@ -119,27 +162,19 @@ match:
 		if (matched == 1)
 			printf("  PID USER     %%CPU  VSZ  RSS START ELAPSED CPUTIME COMMAND\n");
 
-		printf("%5d", p->tid);
+		printf("%5d", PIDS_GETINT(ID_TID));
 
-		printf(" %-8.8s", p->euser);
+		printf(" %-8.8s", PIDS_GETSTR(ID_EUSER));
 
-		double pcpu = 0;
-		time_t seconds, cputime;
-		cputime = (p->utime + p->stime) / clktck;
-		seconds = si.uptime - p->start_time / clktck;
-		if (seconds)
-			pcpu = (cputime * 100.0) / seconds;
-		printf(" %4.1f", pcpu);
+		printf(" %4.1f", PIDS_GETREAL(UTILIZATION));
 
-		print_human(p->vm_size*1024);
+		print_human(PIDS_GETULINT(VM_SIZE)*1024);
 
-		print_human(p->vm_rss*1024);
+		print_human(PIDS_GETULINT(VM_RSS)*1024);
 
 		char buf[7];
-		time_t start;
-		time_t seconds_ago;
-		start = (now - si.uptime) + p->start_time / clktck;
-		seconds_ago = now - start;
+		time_t start = boot_time + PIDS_GETREAL(TIME_START);
+		time_t seconds_ago = now - start;
 		if (seconds_ago < 0)
 			seconds_ago = 0;
 		if (seconds_ago > 3600*24)
@@ -148,16 +183,16 @@ match:
 			strftime(buf, sizeof buf, "%H:%M", localtime(&start));
 		printf(" %s", buf);
 
-		print_time(seconds_ago);
+		print_time(PIDS_GETREAL(TIME_ELAPSED));
 
-		print_time(cputime);
+		print_time(PIDS_GETREAL(TIME_ALL));
 
-		if (p->cmdline)
-			for (int i = 0; p->cmdline[i]; i++)
-				printf(" %s", p->cmdline[i]);
+		if (PIDS_GETSTR_V(CMDLINE_V))
+			for (int j = 0; PIDS_GETSTR_V(CMDLINE_V)[j]; j++)
+				printf(" %s", PIDS_GETSTR_V(CMDLINE_V)[j]);
 		else		// kernel threads
-			printf(" [%s]", p->cmd);
-		if (p->state == 'Z')
+			printf(" [%s]", PIDS_GETSTR(CMD));
+		if (PIDS_GETCHR(STATE) == 'Z')
 			printf(" <defunct>");
 
 		printf("\n");
