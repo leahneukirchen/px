@@ -99,17 +99,13 @@ main(int argc, char *argv[])
 		EU_VM_RSS,
 		EU_VM_SIZE,
 	};
-	if (procps_pids_new(&Pids_info, items, 12) < 0) {
+	if (procps_pids_new(&Pids_info, items, 12) < 0)
 		abort();
-	}
 
-	struct pids_fetch *reap;
-	if (!(reap = procps_pids_reap(Pids_info, PIDS_FETCH_TASKS_ONLY))) {
+	struct pids_fetch *reap = procps_pids_reap(Pids_info,
+	    PIDS_FETCH_TASKS_ONLY);
+	if (!reap)
 		abort();
-	}
-
-//	result = readproctab(PROC_FILLCOM | PROC_FILLUSR |
-//	    PROC_FILLSTAT | PROC_FILLSTATUS);
 
 	int matched = 0;
 
@@ -190,7 +186,7 @@ match:
 		if (PIDS_GETSTR_V(CMDLINE_V))
 			for (int j = 0; PIDS_GETSTR_V(CMDLINE_V)[j]; j++)
 				printf(" %s", PIDS_GETSTR_V(CMDLINE_V)[j]);
-		else		// kernel threads
+		else // kernel threads
 			printf(" [%s]", PIDS_GETSTR(CMD));
 		if (PIDS_GETCHR(STATE) == 'Z')
 			printf(" <defunct>");
