@@ -1,0 +1,39 @@
+PX(1)                       General Commands Manual                      PX(1)
+
+NAME
+     px – report details on matching processes
+
+SYNOPSIS
+     px [-f] PATTERNS ...
+
+DESCRIPTION
+     px searches the process list for processes matching any of the patterns
+     PATTERNS and prints details on them, namely PID, user, cpu usage, virtual
+     and real memory usage, start time, run time and cpu time, as well as the
+     full command line.
+
+     As PATTERNS may be used: substrings of the process name or numeric PIDs.
+
+     The options are as follows:
+
+     -f      Search the whole command line, including arguments.
+
+EXIT STATUS
+     The px utility returns 0 when a process was found, 1 if no process was
+     found, and 2 when other errors occured.
+
+SEE ALSO
+     ps(1), pgrep(2)
+
+AUTHORS
+     Leah Neukirchen <leah@vuxu.org>
+
+LICENSE
+     px is in the public domain.
+
+     To the extent possible under law, the creator of this work has waived all
+     copyright and related or neighboring rights to this work.
+
+     http://creativecommons.org/publicdomain/zero/1.0/
+
+Void Linux                        May 8, 2023                       Void Linux

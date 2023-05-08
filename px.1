@@ -1,0 +1,49 @@
+.Dd May 08, 2023
+.Dt PX 1
+.Os
+.Sh NAME
+.Nm px
+.Nd report details on matching processes
+.Sh SYNOPSIS
+.Nm
+.Op Fl f
+.Ar PATTERNS ...
+.Sh DESCRIPTION
+.Nm
+searches the process list for processes matching any of the patterns
+.Ar PATTERNS
+and prints details on them,
+namely PID, user, cpu usage, virtual and real memory usage,
+start time, run time and cpu time, as well as the full command line.
+.Pp
+As
+.Ar PATTERNS
+may be used:
+substrings of the process name or numeric PIDs.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f
+Search the whole command line, including arguments.
+.El
+.Sh EXIT STATUS
+The
+.Nm
+utility returns 0 when a process was found,
+1 if no process was found,
+and 2 when other errors occured.
+.Sh SEE ALSO
+.Xr ps 1 ,
+.Xr pgrep 2
+.Sh AUTHORS
+.An Leah Neukirchen Aq Mt leah@vuxu.org
+.Sh LICENSE
+.Nm
+is in the public domain.
+.Pp
+To the extent possible under law,
+the creator of this work
+has waived all copyright and related or
+neighboring rights to this work.
+.Pp
+.Lk http://creativecommons.org/publicdomain/zero/1.0/
