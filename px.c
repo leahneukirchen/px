@@ -10,6 +10,7 @@
 #include <sys/sysinfo.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,13 +61,16 @@ print_time(time_t t) {
 int
 main(int argc, char *argv[])
 {
+	int r;
 	pid_t me = getpid();
-
 	time_t now = time(0);
 
 	struct stat_info *stat_info = 0;
-	if (procps_stat_new(&stat_info) < 0)
-		abort();
+	if ((r = procps_stat_new(&stat_info)) < 0) {
+		fprintf(stderr, "failed to run procps_stat_new: %s\n",
+		    strerror(-r));
+		exit(2);
+	}
 	time_t boot_time = STAT_GET(stat_info, STAT_SYS_TIME_OF_BOOT, ul_int);
 	procps_stat_unref(&stat_info);
 
@@ -99,13 +103,19 @@ main(int argc, char *argv[])
 		EU_VM_RSS,
 		EU_VM_SIZE,
 	};
-	if (procps_pids_new(&Pids_info, items, 12) < 0)
-		abort();
+	if ((r = procps_pids_new(&Pids_info, items, 12)) < 0) {
+		fprintf(stderr, "failed to run procps_pids_new: %s\n",
+		    strerror(-r));
+		exit(2);
+	}
 
 	struct pids_fetch *reap = procps_pids_reap(Pids_info,
 	    PIDS_FETCH_TASKS_ONLY);
-	if (!reap)
-		abort();
+	if (!reap) {
+		fprintf(stderr, "failed to run procps_pids_reap: %s\n",
+		    strerror(errno));
+		exit(2);
+	}
 
 	int matched = 0;
 
@@ -116,7 +126,7 @@ main(int argc, char *argv[])
                 default:
                         fprintf(stderr,
 			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
-                        exit(1);
+                        exit(2);
                 }
 
 	int total_procs = reap->counts->total;
