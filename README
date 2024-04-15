@@ -4,7 +4,7 @@ NAME
      px – report details on matching processes
 
 SYNOPSIS
-     px [-f] PATTERNS ...
+     px [-f] [-t] PATTERNS ...
 
 DESCRIPTION
      px searches the process list for processes matching any of the patterns
@@ -18,12 +18,14 @@ DESCRIPTION
 
      -f      Search the whole command line, including arguments.
 
+     -t      Print each thread, not just each process.
+
 EXIT STATUS
      The px utility returns 0 when a process was found, 1 if no process was
      found, and 2 when other errors occured.
 
 SEE ALSO
-     ps(1), pgrep(2)
+     pgrep(1), ps(1)
 
 AUTHORS
      Leah Neukirchen <leah@vuxu.org>
@@ -36,4 +38,4 @@ LICENSE
 
      http://creativecommons.org/publicdomain/zero/1.0/
 
-Void Linux                        May 8, 2023                       Void Linux
+Void Linux                      April 15, 2024                      Void Linux

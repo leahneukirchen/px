@@ -22,6 +22,7 @@
 #include <libproc2/stat.h>
 
 int fflag;
+int tflag;
 
 static void
 print_human(intmax_t i)
@@ -109,25 +110,26 @@ main(int argc, char *argv[])
 		exit(2);
 	}
 
+	int matched = 0;
+
+	int c;
+	while ((c = getopt(argc, argv, "tf")) != -1)
+		switch (c) {
+		case 't': tflag = 1; break;
+		case 'f': fflag = 1; break;
+		default:
+			fprintf(stderr,
+			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
+			exit(2);
+		}
+
 	struct pids_fetch *reap = procps_pids_reap(Pids_info,
-	    PIDS_FETCH_TASKS_ONLY);
+	    tflag == 0 ? PIDS_FETCH_TASKS_ONLY : PIDS_FETCH_THREADS_TOO);
 	if (!reap) {
 		fprintf(stderr, "failed to run procps_pids_reap: %s\n",
 		    strerror(errno));
 		exit(2);
 	}
-
-	int matched = 0;
-
-	int c;
-        while ((c = getopt(argc, argv, "f")) != -1)
-                switch (c) {
-		case 'f': fflag = 1; break;
-                default:
-                        fprintf(stderr,
-			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
-                        exit(2);
-                }
 
 	int total_procs = reap->counts->total;
 	for (int i = 0; i < total_procs; i++) {

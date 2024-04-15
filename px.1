@@ -1,4 +1,4 @@
-.Dd May 08, 2023
+.Dd April 15, 2024
 .Dt PX 1
 .Os
 .Sh NAME
@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f
+.Op Fl t
 .Ar PATTERNS ...
 .Sh DESCRIPTION
 .Nm
@@ -25,6 +26,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl f
 Search the whole command line, including arguments.
+.It Fl t
+Print each thread, not just each process.
 .El
 .Sh EXIT STATUS
 The
@@ -33,8 +36,8 @@ utility returns 0 when a process was found,
 1 if no process was found,
 and 2 when other errors occured.
 .Sh SEE ALSO
-.Xr ps 1 ,
-.Xr pgrep 2
+.Xr pgrep 1 ,
+.Xr ps 1
 .Sh AUTHORS
 .An Leah Neukirchen Aq Mt leah@vuxu.org
 .Sh LICENSE
