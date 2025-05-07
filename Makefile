@@ -1,7 +1,7 @@
 ALL=px
 
 CFLAGS=-g -O2 -Wall -Wno-switch -Wextra -Wwrite-strings
-LDFLAGS=-lproc2
+LDLIBS=-lproc2
 
 DESTDIR=
 PREFIX=/usr/local
