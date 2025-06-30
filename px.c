@@ -133,13 +133,13 @@ main(int argc, char *argv[])
 
 	int total_procs = reap->counts->total;
 	for (int i = 0; i < total_procs; i++) {
-#define PIDS_GETCHR(e) PIDS_VAL(EU_ ## e, s_ch, reap->stacks[i], Pids_info)
-#define PIDS_GETINT(e) PIDS_VAL(EU_ ## e, s_int, reap->stacks[i], Pids_info)
-#define PIDS_GETUNT(e) PIDS_VAL(EU_ ## e, u_int, reap->stacks[i], Pids_info)
-#define PIDS_GETULINT(e) PIDS_VAL(EU_ ## e, ul_int, reap->stacks[i], Pids_info)
-#define PIDS_GETREAL(e) PIDS_VAL(EU_ ## e, real, reap->stacks[i], Pids_info)
-#define PIDS_GETSTR(e) PIDS_VAL(EU_ ## e, str, reap->stacks[i], Pids_info)
-#define PIDS_GETSTR_V(e) PIDS_VAL(EU_ ## e, strv, reap->stacks[i], Pids_info)
+#define PIDS_GETCHR(e) PIDS_VAL(EU_ ## e, s_ch, reap->stacks[i])
+#define PIDS_GETINT(e) PIDS_VAL(EU_ ## e, s_int, reap->stacks[i])
+#define PIDS_GETUNT(e) PIDS_VAL(EU_ ## e, u_int, reap->stacks[i])
+#define PIDS_GETULINT(e) PIDS_VAL(EU_ ## e, ul_int, reap->stacks[i])
+#define PIDS_GETREAL(e) PIDS_VAL(EU_ ## e, real, reap->stacks[i])
+#define PIDS_GETSTR(e) PIDS_VAL(EU_ ## e, str, reap->stacks[i])
+#define PIDS_GETSTR_V(e) PIDS_VAL(EU_ ## e, strv, reap->stacks[i])
 		if (argc <= optind)
 			goto match;
 
