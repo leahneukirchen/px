@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	time_t boot_time = STAT_GET(stat_info, STAT_SYS_TIME_OF_BOOT, ul_int);
 	procps_stat_unref(&stat_info);
 
-	struct pids_info *Pids_info = 0;
+	struct pids_info *pids_info = 0;
 	enum pids_item items[] = {
 		PIDS_CMD,
 		PIDS_CMDLINE_V,
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 		EU_VM_RSS,
 		EU_VM_SIZE,
 	};
-	if ((r = procps_pids_new(&Pids_info, items, 12)) < 0) {
+	if ((r = procps_pids_new(&pids_info, items, 12)) < 0) {
 		fprintf(stderr, "failed to run procps_pids_new: %s\n",
 		    strerror(-r));
 		exit(2);
@@ -123,12 +123,12 @@ main(int argc, char *argv[])
 			exit(2);
 		}
 
-	struct pids_fetch *reap = procps_pids_reap(Pids_info,
+	struct pids_fetch *reap = procps_pids_reap(pids_info,
 	    tflag == 0 ? PIDS_FETCH_TASKS_ONLY : PIDS_FETCH_THREADS_TOO);
 	if (!reap) {
 		fprintf(stderr, "failed to run procps_pids_reap: %s\n",
 		    strerror(errno));
-		procps_pids_unref(&Pids_info);
+		procps_pids_unref(&pids_info);
 		exit(2);
 	}
 
@@ -207,6 +207,6 @@ match:
 		printf("\n");
 	}
 
-	procps_pids_unref(&Pids_info);
+	procps_pids_unref(&pids_info);
 	exit(!matched);
 }
