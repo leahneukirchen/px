@@ -128,6 +128,7 @@ main(int argc, char *argv[])
 	if (!reap) {
 		fprintf(stderr, "failed to run procps_pids_reap: %s\n",
 		    strerror(errno));
+		procps_pids_unref(&Pids_info);
 		exit(2);
 	}
 
@@ -206,5 +207,6 @@ match:
 		printf("\n");
 	}
 
+	procps_pids_unref(&Pids_info);
 	exit(!matched);
 }
