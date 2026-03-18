@@ -78,6 +78,7 @@ main(int argc, char *argv[])
 	struct pids_info *pids_info = 0;
 	enum pids_item items[] = {
 		PIDS_CMD,
+		PIDS_CMDLINE,
 		PIDS_CMDLINE_V,
 		PIDS_ID_EUSER,
 		PIDS_ID_TID,
@@ -92,6 +93,7 @@ main(int argc, char *argv[])
 	};
 	enum rel_items {
 		EU_CMD,
+		EU_CMDLINE,
 		EU_CMDLINE_V,
 		EU_ID_EUSER,
 		EU_ID_TID,
@@ -196,11 +198,8 @@ match:
 
 		print_time(PIDS_GETREAL(TIME_ALL));
 
-		if (PIDS_GETSTR_V(CMDLINE_V))
-			for (int j = 0; PIDS_GETSTR_V(CMDLINE_V)[j]; j++)
-				printf(" %s", PIDS_GETSTR_V(CMDLINE_V)[j]);
-		else // kernel threads
-			printf(" [%s]", PIDS_GETSTR(CMD));
+		printf(" %s", PIDS_GETSTR(CMDLINE));
+
 		if (PIDS_GETCHR(STATE) == 'Z')
 			printf(" <defunct>");
 
