@@ -22,7 +22,7 @@ DESCRIPTION
 
 EXIT STATUS
      The px utility returns 0 when a process was found, 1 if no process was
-     found, and 2 when other errors occured.
+     found, and 2 when other errors occurred.
 
 SEE ALSO
      pgrep(1), ps(1)
@@ -37,5 +37,3 @@ LICENSE
      copyright and related or neighboring rights to this work.
 
      http://creativecommons.org/publicdomain/zero/1.0/
-
-Void Linux                      April 15, 2024                      Void Linux

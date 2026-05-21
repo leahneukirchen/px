@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		EU_VM_RSS,
 		EU_VM_SIZE,
 	};
-	if ((r = procps_pids_new(&pids_info, items, 12)) < 0) {
+	if ((r = procps_pids_new(&pids_info, items, 13)) < 0) {
 		fprintf(stderr, "failed to run procps_pids_new: %s\n",
 		    strerror(-r));
 		exit(2);
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		case 'f': fflag = 1; break;
 		default:
 			fprintf(stderr,
-			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
+			    "Usage: %s [-f] [-t] [PATTERN...]\n", argv[0]);
 			exit(2);
 		}
 
