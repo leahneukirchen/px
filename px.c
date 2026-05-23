@@ -106,7 +106,8 @@ main(int argc, char *argv[])
 		EU_VM_RSS,
 		EU_VM_SIZE,
 	};
-	if ((r = procps_pids_new(&pids_info, items, 12)) < 0) {
+	r = procps_pids_new(&pids_info, items, sizeof items / sizeof items[0]);
+	if (r < 0) {
 		fprintf(stderr, "failed to run procps_pids_new: %s\n",
 		    strerror(-r));
 		exit(2);
