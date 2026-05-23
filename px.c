@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		case 'f': fflag = 1; break;
 		default:
 			fprintf(stderr,
-			    "Usage: %s [-f] [PATTERN...]\n", argv[0]);
+			    "Usage: %s [-f] [-t] [PATTERN...]\n", argv[0]);
 			exit(2);
 		}
 
